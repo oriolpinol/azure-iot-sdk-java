@@ -99,6 +99,63 @@ public class HttpsIotHubConnection
     }
 
     /**
+     * Sends an generic https message.
+     *
+     * @param httpsMessage the message to send.
+     * @param httpsMethod the https method (GET, POST, PUT, DELETE).
+     * @param httpsPath the path that will be added at the end of the URI with `/`.
+     *
+     * @return the ResponseMessage including status code and payload from sending message.
+     *
+     * @throws IOException if the IoT Hub could not be reached.
+     */
+    public ResponseMessage sendHttpsMessage(HttpsMessage httpsMessage, HttpsMethod httpsMethod, String httpsPath) throws IOException
+    {
+        synchronized (HTTPS_CONNECTION_LOCK)
+        {
+            String iotHubHostname = this.config.getIotHubHostname();
+            String deviceId = this.config.getDeviceId();
+            int readTimeoutMillis = this.config.getReadTimeoutMillis();
+
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_002: [The function shall send a request to the URL 'https://[iotHubHostname]/devices/[deviceId]/[path]?api-version=2016-02-03'.]
+            IotHubUri messageUri = new IotHubUri(iotHubHostname, deviceId, httpsPath);
+            URL messageUrl = new URL("https://" + messageUri.toString());
+            IotHubSasToken sasToken = new IotHubSasToken(this.config, System.currentTimeMillis() / 1000L +
+                    this.config.getTokenValidSecs() + 1L);
+
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_003: [The function shall send a POST request.]
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_004: [The function shall set the request body to the message body.]
+            HttpsRequest request =
+                    new HttpsRequest(messageUrl, httpsMethod, httpsMessage.getBody());
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_005: [The function shall write each message property as a request header.]
+            for (MessageProperty property : httpsMessage.getProperties())
+            {
+                request.setHeaderField(property.getName(),
+                        property.getValue());
+            }
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_006: [The function shall set the request read timeout to be the configuration parameter readTimeoutMillis.]
+            request.setReadTimeoutMillis(readTimeoutMillis).
+                    // Codes_SRS_HTTPSIOTHUBCONNECTION_11_007: [The function shall set the header field 'authorization' to be a valid SAS token generated from the configuration parameters.]
+                            setHeaderField("authorization", sasToken.toString()).
+                    // Codes_SRS_HTTPSIOTHUBCONNECTION_11_008: [The function shall set the header field 'iothub-to' to be '/devices/[deviceId]/[path]'.]
+                            setHeaderField("iothub-to", messageUri.getPath()).
+                    // Codes_SRS_HTTPSIOTHUBCONNECTION_11_009: [The function shall set the header field 'content-type' to be the message content type.]
+                            setHeaderField("content-type", httpsMessage.getContentType());
+            //Codes_SRS_HTTPSIOTHUBCONNECTION_25_040: [The function shall set the IotHub SSL context by calling setSSLContext on the request.]
+            request.setSSLContext(this.config.getIotHubSSLContext());
+
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_012: [If the IoT Hub could not be reached, the function shall throw an IOException.]
+            HttpsResponse response = request.send();
+
+            // Codes_SRS_HTTPSIOTHUBCONNECTION_11_010: [The function shall return a ResponseMessage with the status and payload.]
+            IotHubStatusCode status = IotHubStatusCode.getIotHubStatusCode(response.getStatus());
+            byte[] body = response.getBody();
+
+            return new ResponseMessage(body, status);
+        }
+    }
+
+    /**
      * Receives a message, if one exists.
      *
      * @return a message, or null if none exists.

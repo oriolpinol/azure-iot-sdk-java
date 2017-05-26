@@ -71,6 +71,24 @@ public class IotHubSSLContext
         generateSSLContext(certManager);
     }
 
+    IotHubSSLContext(String pathToCertificate, String userCertificateString)
+            throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, CertificateException
+    {
+        IotHubCertificateManager certManager = new IotHubCertificateManager();
+        if (pathToCertificate == null && userCertificateString == null)
+        {
+            generateSSLContext(certManager);
+        }
+        else if (pathToCertificate != null)
+        {
+            certManager.setValidCertPath(pathToCertificate);
+        }
+        else
+        {
+            certManager.setValidCert(userCertificateString);
+        }
+    }
+
     private void generateSSLContext(IotHubCertificateManager certificate) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException, CertificateException
     {
         //Codes_SRS_IOTHUBSSLCONTEXT_25_002: [**The constructor shall create default SSL context for TLSv1.2.**]**
