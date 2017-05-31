@@ -110,6 +110,16 @@ public class Message
     /// </summary>
     private MessageType messageType;
 
+    /// <summary>
+    /// [Required in IoTHubTransportManager] Used to specify the method invoked for the message (POST, GET).
+    /// </summary>
+    private IotHubMethod iotHubMethod;
+
+    /// <summary>
+    /// [Required in IoTHubTransportManager] Used to specify the URI path of this message.
+    /// </summary>
+    private String uriPath;
+
     /**
      * User-defined properties.
      */
@@ -374,10 +384,46 @@ public class Message
 
     /**
      * Setter for the Message type
-     * @param type The enum containing the the Message type value
+     * @param type The enum containing the Message type value
      */
     public void setMessageType(MessageType type)
     {
         this.messageType = type;
+    }
+
+    /**
+     * Getter for the IoT Hub method
+     * @return the IoT Hub method
+     */
+    public IotHubMethod getIotHubMethod()
+    {
+        return this.iotHubMethod;
+    }
+
+    /**
+     * Setter for the IoT Hub method
+     * @param iotHubMethod The enum containing the IoT Hub method.
+     */
+    public void setIotHubMethod(IotHubMethod iotHubMethod)
+    {
+        this.iotHubMethod = iotHubMethod;
+    }
+
+    /**
+     * Getter for the URI path
+     * @return the string with the URI path
+     */
+    public String getUriPath()
+    {
+        return uriPath;
+    }
+
+    /**
+     * Setter for the URI path
+     * @param uriPath The string with the URI path
+     */
+    public void setUriPath(String uriPath)
+    {
+        this.uriPath = uriPath;
     }
 }
