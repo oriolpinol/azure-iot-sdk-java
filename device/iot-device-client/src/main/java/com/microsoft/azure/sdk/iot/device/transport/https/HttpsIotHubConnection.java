@@ -61,8 +61,8 @@ public class HttpsIotHubConnection
             int readTimeoutMillis = this.config.getReadTimeoutMillis();
 
             // Codes_SRS_HTTPSIOTHUBCONNECTION_11_002: [The function shall send a request to the URL 'https://[iotHubHostname]/devices/[deviceId]/messages/events?api-version=2016-02-03'.]
-            IotHubEventUri eventUri = new IotHubEventUri(iotHubHostname, deviceId);
-            URL eventUrl = new URL("https://" + eventUri.toString());
+            IotHubEventUri iotHubEventUri = new IotHubEventUri(iotHubHostname, deviceId);
+            URL eventUrl = new URL("https://" + iotHubEventUri.toString());
             IotHubSasToken sasToken = new IotHubSasToken(this.config, System.currentTimeMillis() / 1000L +
                     this.config.getTokenValidSecs() + 1L);
 
@@ -81,7 +81,7 @@ public class HttpsIotHubConnection
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_11_007: [The function shall set the header field 'authorization' to be a valid SAS token generated from the configuration parameters.]
                             setHeaderField("authorization", sasToken.toString()).
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_11_008: [The function shall set the header field 'iothub-to' to be '/devices/[deviceId]/messages/events'.]
-                            setHeaderField("iothub-to", eventUri.getPath()).
+                            setHeaderField("iothub-to", iotHubEventUri.getPath()).
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_11_009: [The function shall set the header field 'content-type' to be the message content type.]
                             setHeaderField("content-type", msg.getContentType());
             //Codes_SRS_HTTPSIOTHUBCONNECTION_25_040: [The function shall set the IotHub SSL context by calling setSSLContext on the request.]
@@ -118,8 +118,8 @@ public class HttpsIotHubConnection
             int readTimeoutMillis = this.config.getReadTimeoutMillis();
 
             // Codes_SRS_HTTPSIOTHUBCONNECTION_21_041: [The function shall send a request to the URL https://[iotHubHostname]/devices/[deviceId]/[path]?api-version=2016-02-03.]
-            IotHubUri messageUri = new IotHubUri(iotHubHostname, deviceId, httpsPath);
-            URL messageUrl = new URL("https://" + messageUri.toString());
+            IotHubUri iotHubUri = new IotHubUri(iotHubHostname, deviceId, httpsPath);
+            URL messageUrl = new URL("https://" + iotHubUri.toString());
             IotHubSasToken sasToken = new IotHubSasToken(this.config, System.currentTimeMillis() / 1000L +
                     this.config.getTokenValidSecs() + 1L);
 
@@ -138,7 +138,7 @@ public class HttpsIotHubConnection
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_21_047: [The function shall set the header field 'authorization' to be a valid SAS token generated from the configuration parameters.]
                             setHeaderField("authorization", sasToken.toString()).
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_21_048: [The function shall set the header field 'iothub-to' to be '/devices/[deviceId]/[path]'.]
-                            setHeaderField("iothub-to", messageUri.getPath()).
+                            setHeaderField("iothub-to", iotHubUri.getPath()).
                     // Codes_SRS_HTTPSIOTHUBCONNECTION_21_049: [The function shall set the header field 'content-type' to be the message content type.]
                             setHeaderField("content-type", httpsMessage.getContentType());
             //Codes_SRS_HTTPSIOTHUBCONNECTION_21_046: [The function shall set the IotHub SSL context by calling setSSLContext on the request.]

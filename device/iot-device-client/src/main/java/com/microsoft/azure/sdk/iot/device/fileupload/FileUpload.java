@@ -3,29 +3,13 @@
 
 package com.microsoft.azure.sdk.iot.device.fileupload;
 
-import com.microsoft.azure.sdk.iot.deps.serializer.FileUploadRequestParser;
-import com.microsoft.azure.sdk.iot.deps.serializer.FileUploadResponseParser;
-import com.microsoft.azure.sdk.iot.deps.serializer.FileUploadStatusParser;
-import com.microsoft.azure.sdk.iot.device.*;
+import com.microsoft.azure.sdk.iot.device.DeviceClientConfig;
+import com.microsoft.azure.sdk.iot.device.IotHubEventCallback;
+import com.microsoft.azure.sdk.iot.device.CustomLogger;
 
-import com.microsoft.azure.sdk.iot.device.transport.https.*;
-import com.microsoft.azure.storage.*;
-import com.microsoft.azure.storage.blob.*;
+import com.microsoft.azure.sdk.iot.device.transport.https.HttpsTransportManager;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,8 +19,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class FileUpload
 {
-    private static final Charset DEFAULT_IOTHUB_MESSAGE_CHARSET = StandardCharsets.UTF_8;
-
     private HttpsTransportManager httpsTransportManager;
     private static CustomLogger logger;
 
@@ -44,11 +26,11 @@ public final class FileUpload
      * CONSTRUCTOR
      *
      * @param config is the set of device client configurations.
-     * @throws IOException if the config FileUpload cannot create a new instance of the transport.
      * @throws IllegalArgumentException if one of the parameters is null.
      */
-    public FileUpload(DeviceClientConfig config) throws IllegalArgumentException, IOException
+    public FileUpload(DeviceClientConfig config) throws IllegalArgumentException
     {
+        /* Codes_SRS_FILEUPLOAD_21_001: [If the provided `config` is null, the constructor shall throw IllegalArgumentException.] */
         if(config == null)
         {
             throw new IllegalArgumentException("config is null");
@@ -57,6 +39,8 @@ public final class FileUpload
         // File upload will directly use the HttpsTransportManager, avoiding
         //  all extra async controls.
         // We can do that because File upload have its own async mechanism.
+        /* Codes_SRS_FILEUPLOAD_21_002: [The constructor shall create a new instance of `HttpsTransportManager` with the provided `config`.] */
+        /* Codes_SRS_FILEUPLOAD_21_003: [If the constructor fail to create the new instance of the `HttpsTransportManager`, it shall bypass the exception.] */
         this.httpsTransportManager = new HttpsTransportManager(config);
 
         logger = new CustomLogger(this.getClass());
@@ -67,7 +51,8 @@ public final class FileUpload
      * Upload the file to container, which was associated to the iothub.
      * This function will start the upload process, and back the execution
      * to the caller. The upload process will be executed in background.
-     * When it is completed, it will trigger the callback with the upload status.
+     * When it is completed, the background thread will trigger the
+     * callback with the upload status.
      *
      * @param blobName is the name of the file in the container.
      * @param inputStream is the input stream.
@@ -77,6 +62,7 @@ public final class FileUpload
      * @throws IllegalArgumentException if one of the parameters is invalid.
      *              blobName is {@code null} or empty,
      *              inputStream is {@code null},
+     *              streamLength is negative,
      *              statusCallback is {@code null}
      */
     public synchronized void uploadToBlobAsync(
@@ -84,22 +70,35 @@ public final class FileUpload
             IotHubEventCallback statusCallback, Object statusCallbackContext)
             throws IllegalArgumentException
     {
+        /* Codes_SRS_FILEUPLOAD_21_005: [If the `blobName` is null or empty, the uploadToBlobAsync shall throw IllegalArgumentException.] */
         if((blobName == null) || blobName.isEmpty())
         {
             throw new IllegalArgumentException("blobName is null or empty");
         }
 
+        /* Codes_SRS_FILEUPLOAD_21_006: [If the `inputStream` is null, the uploadToBlobAsync shall throw IllegalArgumentException.] */
         if(inputStream == null)
         {
             throw new IllegalArgumentException("inputStream is null or empty");
         }
 
+        /* Codes_SRS_FILEUPLOAD_21_007: [If the `streamLength` is negative, the uploadToBlobAsync shall throw IllegalArgumentException.] */
+        if(streamLength < 0)
+        {
+            throw new IllegalArgumentException("streamLength is negative");
+        }
+
+        /* Codes_SRS_FILEUPLOAD_21_008: [If the `userCallback` is null, the uploadToBlobAsync shall throw IllegalArgumentException.] */
         if(statusCallback == null)
         {
             throw new IllegalArgumentException("statusCallback is null");
         }
 
+        /* Codes_SRS_FILEUPLOAD_21_004: [The uploadToBlobAsync shall asynchronously upload the InputStream `inputStream` to the blob in `blobName`.] */
+        /* Codes_SRS_FILEUPLOAD_21_009: [The uploadToBlobAsync shall create a `FileUploadTask` to control this file upload.] */
         FileUploadTask fileUploadTask = new FileUploadTask(blobName, inputStream, streamLength, httpsTransportManager, statusCallback, statusCallbackContext);
+
+        /* Codes_SRS_FILEUPLOAD_21_010: [The uploadToBlobAsync shall schedule the task `FileUploadTask` to immediately start.] */
         ScheduledExecutorService taskScheduler = Executors.newScheduledThreadPool(1);
         taskScheduler.schedule(fileUploadTask,0, TimeUnit.SECONDS);
     }

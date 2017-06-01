@@ -247,6 +247,10 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
+                new IotHubEventUri((String)any, (String)any);
+                result = mockUri;
+                new HttpsRequest((URL)any, HttpsMethod.POST, (byte[]) any);
+                result = mockRequest;
                 mockUri.getPath();
                 result = path;
             }
@@ -273,6 +277,10 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
+                new IotHubEventUri((String)any, (String)any);
+                result = mockUri;
+                new HttpsRequest((URL)any, HttpsMethod.POST, (byte[]) any);
+                result = mockRequest;
                 mockMsg.getContentType();
                 result = contentType;
             }
@@ -559,6 +567,10 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
+                new IotHubUri((String)any, (String)any, uriPath);
+                result = mockUri;
+                new HttpsRequest((URL)any, HttpsMethod.POST, (byte[]) any);
+                result = mockRequest;
                 mockUri.getPath();
                 result = path;
             }
@@ -567,12 +579,11 @@ public class HttpsIotHubConnectionTest
         HttpsIotHubConnection conn = new HttpsIotHubConnection(mockConfig);
         conn.sendHttpsMessage(mockMsg, httpsMethod, uriPath);
 
-        final String expectedPath = path;
         new Verifications()
         {
             {
-                mockRequest.setHeaderField(withMatch("(?i)iothub-to"),
-                        expectedPath);
+                mockRequest.setHeaderField(withMatch("(?i)iothub-to"), path);
+                times = 1;
             }
         };
     }
@@ -587,6 +598,10 @@ public class HttpsIotHubConnectionTest
         new NonStrictExpectations()
         {
             {
+                new IotHubUri((String)any, (String)any, uriPath);
+                result = mockUri;
+                new HttpsRequest((URL)any, HttpsMethod.POST, (byte[]) any);
+                result = mockRequest;
                 mockMsg.getContentType();
                 result = contentType;
             }
@@ -781,12 +796,11 @@ public class HttpsIotHubConnectionTest
         HttpsIotHubConnection conn = new HttpsIotHubConnection(mockConfig);
         conn.receiveMessage();
 
-        final String expectedPath = path;
         new Verifications()
         {
             {
                 mockRequest.setHeaderField(withMatch("(?i)iothub-to"),
-                        expectedPath);
+                        path);
             }
         };
     }
